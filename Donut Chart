@@ -1,0 +1,62 @@
+# 📊 Hospitality Revenue Insights - Multiple Chart Outputs
+
+import pandas as pd
+import numpy as np
+import plotly.express as px
+from datetime import datetime, timedelta
+
+print("Simulating hospitality revenue data...")
+
+# Common data generation
+start_date = datetime(2023, 1, 1)
+end_date = datetime(2024, 12, 31)
+dates = pd.date_range(start_date, end_date)
+
+data = []
+for date in dates:
+    base_revenue = 20000 + 5000 * np.sin(date.month * np.pi / 6) + 100 * np.random.randn()
+    if date.weekday() >= 5:
+        base_revenue *= 1.15
+    if 6 <= date.month <= 8:
+        base_revenue *= 1.25
+    elif date.month in [12, 1]:
+        base_revenue *= 1.10
+    data.append({'date': date, 'revenue': base_revenue, 'year': date.year})
+
+df = pd.DataFrame(data)
+df['month_year'] = df['date'].dt.strftime('%b %Y')
+
+# 2️⃣ Second Chart: Styled Donut Chart
+# ------------------------------------
+fig2 = px.pie(
+    monthly_revenue1,
+    values='revenue',
+    names='month_year',
+    title='2️⃣ Styled Revenue Donut Chart',
+    color_discrete_sequence=px.colors.qualitative.Pastel,
+    hole=0.3
+)
+
+fig2.update_traces(
+    textinfo='percent+label',
+    hovertemplate='%{label}<br>Revenue: ₹%{value:,.0f}<br>Percentage: %{percent}',
+    textfont_size=14
+)
+
+fig2.update_layout(
+    title_font_size=24,
+    title_x=0.5,
+    legend_title_text='Month-Year',
+    legend_font_size=12,
+    legend=dict(
+        orientation='h',
+        yanchor='bottom',
+        y=-0.2,
+        xanchor='center',
+        x=0.5
+    ),
+    margin=dict(t=80, b=50, l=50, r=50)
+)
+
+fig2.show()
+
