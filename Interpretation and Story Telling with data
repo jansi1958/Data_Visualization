@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Hospitality Revenue Insights (2023-2024)</title>
+    <!-- Chosen Palette: "Warm Harmony" - A calming palette with warm neutrals (bg-stone-100), rich text (text-slate-800), and subtle accents (teal, amber, rose) for a professional and supportive feel. -->
+    <!-- Application Structure Plan: A top-down narrative dashboard. It starts with a high-level summary and key performance indicators (KPIs). The next section provides a deep dive into the core "Revenue Story" with interactive charts for time-series and seasonal analysis. The final section presents "Strategic Actions," transforming insights from the charts into concrete recommendations. This structure guides the user from 'what happened' to 'why it matters' and 'what to do next,' making the report's content highly actionable and easy to digest. -->
+    <!-- Visualization & Content Choices: 
+        1. KPIs: Goal=Inform. Method=Dynamic HTML text blocks. Interaction=None. Justification=Provides a quick, scannable overview of the most critical numbers from the report.
+        2. Revenue Over Time: Goal=Change. Method=Line Chart (Chart.js). Interaction=Hover for tooltips, year toggle buttons. Justification=Effectively shows trends, seasonality, and year-over-year comparisons as described in the report. The toggle isolates data for clearer analysis.
+        3. Monthly Revenue Share: Goal=Compare/Proportions. Method=Donut Chart (Chart.js). Interaction=Hover highlights segments, dynamic text updates with selected month's data. Justification=Perfectly visualizes the part-to-whole relationship of monthly revenue contributions and allows interactive exploration of the "Autumn Slump" and peak months.
+        4. Strategic Actions: Goal=Inform/Action. Method=Styled HTML content blocks (accordion-style). Interaction=Click to expand/collapse. Justification=Presents the report's key recommendations in a digestible, organized format that doesn't overwhelm the user initially.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 350px; max-height: 50vh; }
+        @media (min-width: 768px) { .chart-container { height: 400px; } }
+        .kpi-card { transition: all 0.3s ease-in-out; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .active-btn { background-color: #0d9488; color: white; }
+        .inactive-btn { background-color: #f0fdfa; color: #134e4a; }
+    </style>
+</head>
+<body class="bg-stone-100 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-teal-800">Hospitality Revenue Insights</h1>
+            <p class="text-lg text-slate-600 mt-2">An Interactive Analysis of Performance in 2023-2024</p>
+        </header>
+
+        <main>
+            <!-- Section 1: Key Performance Indicators -->
+            <section id="kpis" class="mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="kpi-card bg-white p-6 rounded-lg shadow-md border-l-4 border-teal-500">
+                        <h3 class="text-slate-500 font-semibold">Highest Revenue Month</h3>
+                        <p class="text-3xl font-bold text-teal-700 mt-2">March 2024</p>
+                        <p class="text-md text-slate-600" id="highest-revenue-value">$812,505</p>
+                    </div>
+                    <div class="kpi-card bg-white p-6 rounded-lg shadow-md border-l-4 border-amber-500">
+                        <h3 class="text-slate-500 font-semibold">Key Challenge Period</h3>
+                        <p class="text-3xl font-bold text-amber-700 mt-2">The Autumn Slump</p>
+                        <p class="text-md text-slate-600">Sept, Oct, Nov</p>
+                    </div>
+                    <div class="kpi-card bg-white p-6 rounded-lg shadow-md border-l-4 border-rose-500">
+                        <h3 class="text-slate-500 font-semibold">Primary Revenue Driver</h3>
+                        <p class="text-3xl font-bold text-rose-700 mt-2">Seasonal Peaks</p>
+                        <p class="text-md text-slate-600">Early Spring & Summer</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: The Revenue Story -->
+            <section id="revenue-story" class="bg-white p-6 md:p-8 rounded-lg shadow-lg mb-12">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-slate-800">The Revenue Story</h2>
+                    <p class="text-slate-600 mt-2 max-w-3xl mx-auto">Explore the rhythmic flow of revenue to understand seasonal trends and compare year-over-year performance. Interact with the charts to uncover detailed insights.</p>
+                </div>
+
+                <!-- Visualization 1: Revenue Over Time -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold text-center mb-4">Revenue Flow: 2023 vs 2024</h3>
+                    <div class="flex justify-center mb-4 gap-2">
+                         <button id="btn-both" class="px-4 py-2 rounded-md font-semibold transition-colors duration-300 active-btn">Both Years</button>
+                        <button id="btn-2023" class="px-4 py-2 rounded-md font-semibold transition-colors duration-300 inactive-btn">2023 Only</button>
+                        <button id="btn-2024" class="px-4 py-2 rounded-md font-semibold transition-colors duration-300 inactive-btn">2024 Only</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueOverTimeChart"></canvas>
+                    </div>
+                    <p id="time-series-insight" class="text-center mt-4 text-slate-600 italic max-w-2xl mx-auto">The data reveals strong weekly peaks and clear annual cycles. Note the deeper revenue troughs in the latter half of 2024, signaling a potential challenge.</p>
+                </div>
+
+                <hr class="my-12 border-stone-200">
+
+                <!-- Visualization 2: Monthly Revenue Share -->
+                <div>
+                     <h3 class="text-2xl font-semibold text-center mb-4">Monthly Revenue Contribution</h3>
+                     <div class="flex flex-col md:flex-row items-center gap-8">
+                        <div class="w-full md:w-1/2 chart-container h-[300px] md:h-[400px]">
+                            <canvas id="monthlyShareChart"></canvas>
+                        </div>
+                        <div id="monthly-insight-panel" class="w-full md:w-1/2 p-6 bg-stone-50 rounded-lg">
+                            <h4 class="text-xl font-bold text-teal-800 mb-2">Hover Over a Slice</h4>
+                            <p class="text-slate-700">Explore the monthly revenue breakdown. The chart highlights the significant contribution of peak seasons and reveals the challenge of the "Autumn Slump".</p>
+                            <div id="insight-details" class="mt-4 opacity-0 transition-opacity duration-500">
+                                <p class="text-lg"><strong class="font-semibold text-slate-800">Month:</strong> <span id="insight-month"></span></p>
+                                <p class="text-lg"><strong class="font-semibold text-slate-800">Revenue Share:</strong> <span id="insight-share"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Section 3: Strategic Actions -->
+            <section id="actions">
+                 <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-slate-800">From Insight to Action</h2>
+                    <p class="text-slate-600 mt-2 max-w-3xl mx-auto">Based on the data, here are strategic recommendations to optimize revenue and address key challenges.</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="accordion-item bg-white rounded-lg shadow-md">
+                        <button class="accordion-header w-full text-left p-6 flex justify-between items-center">
+                            <span class="text-xl font-semibold text-teal-800">Maximize Peak Season Potential</span>
+                            <span class="text-2xl text-teal-600 transform transition-transform duration-300">+</span>
+                        </button>
+                        <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out px-6">
+                            <p class="pb-6 text-slate-700">With March, January, and June as consistent high-performers, the focus should be on maximizing Average Daily Rate (ADR). Implement dynamic pricing, minimize discounts, and create campaigns to encourage longer stays or upsell premium rooms and services during these periods.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-white rounded-lg shadow-md">
+                        <button class="accordion-header w-full text-left p-6 flex justify-between items-center">
+                            <span class="text-xl font-semibold text-amber-800">Tackle the Autumn Challenge</span>
+                            <span class="text-2xl text-amber-600 transform transition-transform duration-300">+</span>
+                        </button>
+                        <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out px-6">
+                           <p class="pb-6 text-slate-700">The consistent dip from September to November is the key area for growth. Launch targeted promotions, attractive packages, or special events to stimulate leisure travel. Intensify corporate and group sales efforts, which are often less affected by seasonality. Engage the local market with "staycation" offers.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-white rounded-lg shadow-md">
+                        <button class="accordion-header w-full text-left p-6 flex justify-between items-center">
+                            <span class="text-xl font-semibold text-rose-800">Address the 2024 Performance Dip</span>
+                             <span class="text-2xl text-rose-600 transform transition-transform duration-300">+</span>
+                        </button>
+                        <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out px-6">
+                             <p class="pb-6 text-slate-700">The lower revenue troughs in late 2024 require a deep-dive analysis. Investigate factors like new local competition, shifts in booking channel performance (e.g., lower ADR from OTAs), macro-economic factors, or the effectiveness of recent marketing campaigns to understand the root cause and course-correct.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const timeSeriesData = {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: '2023 Revenue',
+                        data: [27500, 26000, 28000, 27000, 25000, 24500, 22000, 19000, 16000, 17000, 18000, 25000],
+                        borderColor: 'rgb(96, 165, 250)',
+                        backgroundColor: 'rgba(96, 165, 250, 0.5)',
+                        tension: 0.4,
+                        fill: false,
+                    },
+                    {
+                        label: '2024 Revenue',
+                        data: [28000, 27000, 28500, 28000, 26000, 25000, 24000, 22000, 19500, 16000, 17500, 22000],
+                        borderColor: 'rgb(248, 113, 113)',
+                        backgroundColor: 'rgba(248, 113, 113, 0.5)',
+                        tension: 0.4,
+                        fill: false,
+                    }
+                ]
+            };
+
+            const monthlyShareData = {
+                labels: ['Mar 2024', 'Mar 2023', 'Jan 2023', 'Jan 2024', 'Jun 2024', 'Jun 2023', 'Apr 2023', 'Apr 2024', 'Feb 2024', 'May 2023', 'May 2024', 'Dec 2024', 'Dec 2023', 'Jul 2023', 'Feb 2023', 'Jul 2024', 'Aug 2024', 'Aug 2023', 'Nov 2023', 'Nov 2024', 'Oct 2023', 'Oct 2024', 'Sep 2024', 'Sep 2023'],
+                data: [4.97, 4.92, 4.9, 4.87, 4.82, 4.76, 4.69, 4.64, 4.5, 4.43, 4.43, 4.35, 4.35, 4.3, 4.3, 4.3, 3.87, 3.86, 3.34, 3.35, 3.1, 3.09, 2.88, 2.87],
+                backgroundColor: ['#14b8a6','#2dd4bf','#f97316','#fb923c','#a3e635','#84cc16','#ec4899','#f472b6','#a855f7','#eab308','#f59e0b','#f43f5e','#fb7185','#60a5fa','#38bdf8','#818cf8','#6366f1','#a78bfa','#8b5cf6','#d946ef','#c026d3','#e11d48','#be123c','#f9a8d4']
+            };
+            
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value / 1000) + 'k';
+                            }
+                        }
+                    }
+                }
+            };
+
+            const revenueCtx = document.getElementById('revenueOverTimeChart').getContext('2d');
+            const revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: timeSeriesData,
+                options: chartOptions
+            });
+
+            const monthlyCtx = document.getElementById('monthlyShareChart').getContext('2d');
+            const monthlyChart = new Chart(monthlyCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: monthlyShareData.labels,
+                    datasets: [{
+                        label: 'Revenue Share',
+                        data: monthlyShareData.data,
+                        backgroundColor: monthlyShareData.backgroundColor,
+                        hoverOffset: 16,
+                        borderWidth: 2,
+                        borderColor: '#f0f2f5'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    return ${context.label}: ${context.parsed.toFixed(2)}%;
+                                }
+                            }
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                        const insightPanel = document.getElementById('monthly-insight-panel');
+                        const insightDetails = document.getElementById('insight-details');
+                        if (chartElement.length) {
+                            const index = chartElement[0].index;
+                            document.getElementById('insight-month').textContent = monthlyShareData.labels[index];
+                            document.getElementById('insight-share').textContent = ${monthlyShareData.data[index].toFixed(2)}%;
+                            insightPanel.querySelector('h4').textContent = 'Monthly Breakdown';
+                            insightDetails.classList.remove('opacity-0');
+                        } else {
+                             insightPanel.querySelector('h4').textContent = 'Hover Over a Slice';
+                             insightDetails.classList.add('opacity-0');
+                        }
+                    },
+                }
+            });
+
+            const btnBoth = document.getElementById('btn-both');
+            const btn2023 = document.getElementById('btn-2023');
+            const btn2024 = document.getElementById('btn-2024');
+            const allBtns = [btnBoth, btn2023, btn2024];
+            
+            function setActiveButton(activeBtn) {
+                allBtns.forEach(btn => {
+                    btn.classList.remove('active-btn');
+                    btn.classList.add('inactive-btn');
+                });
+                activeBtn.classList.add('active-btn');
+                activeBtn.classList.remove('inactive-btn');
+            }
+
+            btnBoth.addEventListener('click', () => {
+                revenueChart.data.datasets[0].hidden = false;
+                revenueChart.data.datasets[1].hidden = false;
+                revenueChart.update();
+                setActiveButton(btnBoth);
+            });
+            btn2023.addEventListener('click', () => {
+                revenueChart.data.datasets[0].hidden = false;
+                revenueChart.data.datasets[1].hidden = true;
+                revenueChart.update();
+                setActiveButton(btn2023);
+            });
+            btn2024.addEventListener('click', () => {
+                revenueChart.data.datasets[0].hidden = true;
+                revenueChart.data.datasets[1].hidden = false;
+                revenueChart.update();
+                setActiveButton(btn2024);
+            });
+            
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = header.querySelector('span:last-child');
+                header.addEventListener('click', () => {
+                    const isExpanded = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    
+                    document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = '0px');
+                    document.querySelectorAll('.accordion-header span:last-child').forEach(i => i.textContent = '+');
+                    
+                    if (!isExpanded) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.textContent = '-';
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
