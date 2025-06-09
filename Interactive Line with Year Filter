@@ -1,0 +1,60 @@
+# 📊 Hospitality Revenue Insights - Multiple Chart Outputs
+
+import pandas as pd
+import numpy as np
+import plotly.express as px
+from datetime import datetime, timedelta
+
+print("Simulating hospitality revenue data...")
+
+# Common data generation
+start_date = datetime(2023, 1, 1)
+end_date = datetime(2024, 12, 31)
+dates = pd.date_range(start_date, end_date)
+
+data = []
+for date in dates:
+    base_revenue = 20000 + 5000 * np.sin(date.month * np.pi / 6) + 100 * np.random.randn()
+    if date.weekday() >= 5:
+        base_revenue *= 1.15
+    if 6 <= date.month <= 8:
+        base_revenue *= 1.25
+    elif date.month in [12, 1]:
+        base_revenue *= 1.10
+    data.append({'date': date, 'revenue': base_revenue, 'year': date.year})
+
+df = pd.DataFrame(data)
+df['month_year'] = df['date'].dt.strftime('%b %Y')
+
+# 3️⃣ Third Chart: Interactive Line with Year Filter
+# ------------------------------------
+fig3 = px.line(df, x='date', y='revenue', color='year', title='3️⃣ Hospitality Revenue Over Time')
+
+fig3.update_layout(
+    updatemenus=[
+        dict(
+            buttons=list([
+                dict(label="Show All",
+                     method="update",
+                     args=[{"visible": [True, True]},
+                           {"title": "Hospitality Revenue Over Time (All Years)"}]),
+                dict(label="Show 2023",
+                     method="update",
+                     args=[{"visible": [True, False]},
+                           {"title": "Hospitality Revenue Over Time (2023)"}]),
+                dict(label="Show 2024",
+                     method="update",
+                     args=[{"visible": [False, True]},
+                           {"title": "Hospitality Revenue Over Time (2024)"}]),
+            ]),
+            direction="down",
+            showactive=True,
+            x=0.1,
+            xanchor="left",
+            y=1.1,
+            yanchor="top"
+        ),
+    ]
+)
+
+fig3.show()
